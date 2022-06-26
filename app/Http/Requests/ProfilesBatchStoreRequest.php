@@ -23,7 +23,7 @@ class ProfilesBatchStoreRequest extends FormRequest
      */
     public function rules()
     {
-        $fileRules = ['required', 'file', 'mimes:csv,xlsx,xlx', 'size:1024'];
+        $fileRules = ['required', 'file', 'mimes:csv,xlsx,xlx'];
 
         return [
             'companies' => $fileRules,

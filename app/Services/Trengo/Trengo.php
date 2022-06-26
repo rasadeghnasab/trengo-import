@@ -2,8 +2,8 @@
 
 namespace App\Services\Trengo;
 
-use App\Services\Trengo\Routes\ContactsRouteTrait;
-use App\Services\Trengo\Routes\ProfilesRouteTrait;
+use App\Services\Trengo\Routes\ContactsRoutesTrait;
+use App\Services\Trengo\Routes\ProfilesRoutesTrait;
 use App\Services\Interfaces\HttpCallable;
 use App\Services\Trengo\Models\Contact;
 use App\Services\Trengo\Models\Profile;
@@ -12,7 +12,7 @@ use Illuminate\Http\Client\Response;
 
 class Trengo implements HttpCallable
 {
-    use ContactsRouteTrait, ProfilesRouteTrait;
+    use ContactsRoutesTrait, ProfilesRoutesTrait;
 
     private PendingRequest $http;
     private string $method;

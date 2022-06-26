@@ -2,6 +2,8 @@
 
 namespace App\Services\Trengo\Routes;
 
+use App\Services\Trengo\Models\Contact;
+
 trait ContactsRoutesTrait
 {
     public function createContact(Contact $contact): self

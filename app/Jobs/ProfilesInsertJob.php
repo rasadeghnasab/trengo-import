@@ -40,7 +40,7 @@ class ProfilesInsertJob implements ShouldQueue
         $response = $trengo->createProfile($this->profile)->sendRequest();
 
         if($response->status() === 201) {
-            return $profile->idHashMap($response->json('id'));
+            return $this->profile->idHashMap($response->json('id'));
         }
 
         if ($response->failed() && $response->status() == 429) {

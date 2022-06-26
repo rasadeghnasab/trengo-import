@@ -10,6 +10,7 @@ use App\Jobs\ProfilesInsertJob;
 use App\Services\Trengo\Models\Profile;
 use App\Services\Trengo\Trengo;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Cache;
@@ -29,7 +30,7 @@ class CompaniesController extends Controller
             ->first()->chunk($trengoRateLimit);
 
         $this->addProfiles($profilesChunks);
-        $this->addContacts($contactsChunks);
+        $this->addContacts($contactsChunks, $profilesChunks->count());
     }
 
     private function addProfiles(Collection $profilesChunks)
@@ -38,13 +39,12 @@ class CompaniesController extends Controller
             foreach ($profiles as $profile) {
                 $profileObject = new Profile($profile->get('id'), $profile->get('name'));
                 $this
-                    ->dispatch(new ProfilesInsertJob($profileObject))
-                    ->delay($index);
+                    ->dispatch((new ProfilesInsertJob($profileObject))->delay(now()->addMinutes($index)));
             }
         }
     }
 
-    private function addContacts(Collection $contactsChunks)
+    private function addContacts(Collection $contactsChunks, int $startIndexFrom = 0)
     {
         foreach ($contactsChunks as $index => $contacts) {
             foreach ($contacts as $contact) {
@@ -63,8 +63,7 @@ class CompaniesController extends Controller
                 }
 
                 $this
-                    ->dispatch(new ContactsInsertJob($contactObject))
-                    ->delay(now()->addMinutes($index));
+                    ->dispatch((new ContactsInsertJob($contactObject))->delay(now()->addMinutes($startIndexFrom + $index)));
             }
         }
     }

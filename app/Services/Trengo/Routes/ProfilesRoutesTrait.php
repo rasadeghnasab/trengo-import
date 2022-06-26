@@ -2,6 +2,8 @@
 
 namespace App\Services\Trengo\Routes;
 
+use App\Services\Trengo\Models\Profile;
+
 trait ProfilesRoutesTrait
 {
     public function profiles(): self
