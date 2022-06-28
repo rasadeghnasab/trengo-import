@@ -35,9 +35,6 @@ class ContactsBatchInsertJob implements ShouldQueue
 
         foreach ($this->contacts->chunk($trengoRateLimit) as $index => $contacts) {
             foreach ($contacts as $contact) {
-//                if ($contact->get('company_id') != '8270aff2c6d14855814b924450b1827f') {
-//                    continue;
-//                }
                 $contactObject = new Contact(
                     $contact->get('company_id'),
                     $contact->get('id'),
@@ -54,8 +51,7 @@ class ContactsBatchInsertJob implements ShouldQueue
 
                 $profileObject = new Profile($profileId, '');
 
-                ContactsInsertJob::dispatch($contactObject, $profileObject)
-                    ->delay(now()->addMinutes($this->startFromIndex + $index));
+                ContactsInsertJob::dispatch($contactObject, $profileObject);
             }
         }
     }
