@@ -2,7 +2,7 @@
 
 namespace App\Services\Trengo\Models;
 
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Redis;
 
 class Profile
 {
@@ -10,19 +10,23 @@ class Profile
     {
     }
 
-    public function getId()
+    public function id(string $id = null): string
     {
+        if ($id) {
+            $this->id = $id;
+        }
+
         return $this->id;
     }
 
-    public function idHashMap(?int $newId)
+    public function idHashMap(int $newId = null)
     {
-        $cacheKey = sprintf('contact_id_%s', $this->getId());
-        if($newId) {
-            return Cache::put($cacheKey, $newId);
+        $redisKey = sprintf('profile_id_%s', $this->id());
+        if ($newId) {
+            return Redis::set($redisKey, $newId);
         }
 
-        return Cache::get($cacheKey);
+        return Redis::get($redisKey);
     }
 
     public function toArray(): array

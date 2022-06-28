@@ -2,15 +2,15 @@
 
 namespace App\Jobs;
 
-use App\Services\Interfaces\HttpCallable;
 use App\Services\Trengo\Models\Contact;
+use App\Services\Trengo\Models\Profile;
 use App\Services\Trengo\Trengo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Http\Client\Response;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
@@ -26,7 +26,7 @@ class ContactsInsertJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private Contact $contact)
+    public function __construct(private Contact $contact, private ?Profile $profile = null)
     {
     }
 
@@ -39,49 +39,10 @@ class ContactsInsertJob implements ShouldQueue
         $trengo = new Trengo(Http::trengo());
         $response = $trengo->createContact($this->contact)->sendRequest();
 
-        if ($response->failed() && $response->status() == 429) {
-            $secondsRemaining = $response->header('Retry-After');
+        $this->attachToProfile($response);
 
-            Cache::put(
-                'api-limit',
-                now()->addSeconds($secondsRemaining)->timestamp,
-                $secondsRemaining
-            );
-
-            return $this->release($secondsRemaining);
-        }
+        $this->releaseDueToRateLimit($response);
     }
-
-//    /**
-//     * Execute the job.
-//     *
-//     * @return void
-//     */
-//    public function handle()
-//    {
-//        $api = new ExternalAPIController;
-//
-//        $counter = $api->hit();
-//
-//        if($api->status() === 429) {
-//            dump(429, $counter);
-//            return $this->release(20);
-//        }
-//
-//        Artisan::call('redis:publish', ['counter' => $counter, 'timestamp']);
-//    }
-
-    /**
-     * Get the middleware the job should pass through.
-     *
-     * @return array
-     */
-//    public function middleware()
-//    {
-//        return [new RateLimitedWithRedis('counter-jobs')];
-//        return [new ThrottlesExceptionsWithRedis(10, 1)];
-//        return [new RateLimited('counter-jobs')];
-//    }
 
     /**
      * Determine the time at which the job should timeout.
@@ -91,5 +52,37 @@ class ContactsInsertJob implements ShouldQueue
     public function retryUntil()
     {
         return now()->addHours(12);
+    }
+
+    /**
+     * @param  Response  $response
+     * @return void
+     */
+    private function attachToProfile(Response $response): void
+    {
+        if ($response->successful() && !is_null($this->profile)) {
+            $this->contact->id($response->json('id'));
+
+            ContactProfileAttachJob::dispatch($this->contact, $this->profile);
+        }
+    }
+
+    /**
+     * @param  Response  $response
+     * @return void
+     */
+    private function releaseDueToRateLimit(Response $response): void
+    {
+        if ($response->failed() && $response->status() == 429) {
+            $secondsRemaining = $response->header('Retry-After');
+
+            Cache::put(
+                'api-limit',
+                now()->addSeconds($secondsRemaining)->timestamp,
+                $secondsRemaining
+            );
+
+            $this->release($secondsRemaining);
+        }
     }
 }

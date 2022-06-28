@@ -2,31 +2,42 @@
 
 namespace App\Services\Trengo\Models;
 
+use Illuminate\Support\Facades\Redis;
+
 class Contact
 {
     public function __construct(
         private string $profileId,
+        private string $id,
+        private string $identifier,
+        private string $channel_id,
         private string $name,
-        private string $email,
-        private ?string $phone,
-        private ?string $dateOfBirth
     ) {
     }
 
     public function profileId()
     {
-        $cacheKey = sprintf('profile_id_%s', $this->profileId);
+        $redisKey = sprintf('profile_id_%s', $this->profileId);
 
-        return Cache::get($cacheKey, null);
+        return Redis::get($redisKey, null);
+    }
+
+    public function id(string $id = null): string
+    {
+        if ($id) {
+            $this->id = $id;
+        }
+
+        return $this->id;
     }
 
     public function toArray(): array
     {
         return [
+            'id' => $this->id,
+            'channel_id' => $this->channel_id,
             'name' => $this->name,
-            'email' => $this->email,
-            'phone' => $this->phone,
-            'date_of_birth' => $this->dateOfBirth,
+            'identifier' => str_replace('_', '', $this->identifier),
         ];
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Services\Interfaces\HttpCallable;
+use App\Services\Trengo\Models\Contact;
 use App\Services\Trengo\Models\Profile;
 use App\Services\Trengo\Trengo;
 use Illuminate\Bus\Queueable;
@@ -12,12 +13,9 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Facades\Http;
 
-use Illuminate\Support\Str;
-
-class ProfilesInsertJob implements ShouldQueue
+class ContactProfileAttachJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -29,7 +27,7 @@ class ProfilesInsertJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private Profile $profile)
+    public function __construct(private Contact $contact, private Profile $profile)
     {
     }
 
@@ -40,12 +38,7 @@ class ProfilesInsertJob implements ShouldQueue
         }
 
         $trengo = new Trengo(Http::trengo());
-        $response = $trengo->createProfile($this->profile)->sendRequest();
-
-
-        if($response->status() === 201) {
-            return $this->profile->idHashMap($response->json('id'));
-        }
+        $response = $trengo->attachContactToProfile($this->contact, $this->profile, 'EMAIL')->sendRequest();
 
         if ($response->failed() && $response->status() == 429) {
             $secondsRemaining = $response->header('Retry-After');

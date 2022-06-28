@@ -19,4 +19,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::post('batch/profiles', [\App\Http\Controllers\CompaniesController::class, 'batchStore']);
+Route::delete('batch/profiles/clear', [\App\Http\Controllers\CompaniesController::class, 'purgeProfiles']);
+Route::delete('batch/contacts/clear', [\App\Http\Controllers\CompaniesController::class, 'purgeContacts']);
 //Route::post('contacts', [\App\Http\Controllers\::class, 'batchStore']);

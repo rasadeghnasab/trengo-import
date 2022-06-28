@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Http;
 
 use Illuminate\Support\Str;
 
-class ProfilesInsertJob implements ShouldQueue
+class ContactsDeleteJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -29,7 +29,7 @@ class ProfilesInsertJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private Profile $profile)
+    public function __construct(private int $contactId)
     {
     }
 
@@ -40,11 +40,10 @@ class ProfilesInsertJob implements ShouldQueue
         }
 
         $trengo = new Trengo(Http::trengo());
-        $response = $trengo->createProfile($this->profile)->sendRequest();
+        $response = $trengo->deleteContact($this->contactId)->sendRequest();
 
-
-        if($response->status() === 201) {
-            return $this->profile->idHashMap($response->json('id'));
+        if ($response->successful()) {
+            return;
         }
 
         if ($response->failed() && $response->status() == 429) {
