@@ -55,9 +55,7 @@ class ContactsBatchInsertJob implements ShouldQueue
                 $profileObject = new Profile($profileId, '');
 
                 ContactsInsertJob::dispatch($contactObject, $profileObject)
-                    ->delay(now()->addSeconds($this->startFromIndex + $index));
-
-//                ContactsInsertJob::dispatch($contactObject, $profileObject);
+                    ->delay(now()->addMinutes($this->startFromIndex + $index));
             }
         }
     }

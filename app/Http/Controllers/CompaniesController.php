@@ -21,54 +21,12 @@ use App\Jobs\ProfilesDeleteJob;
 
 class CompaniesController extends Controller
 {
-    private function dummyProfiles(int $count)
-    {
-        for ($i = 0; $i < $count; $i++) {
-            $profile = new Profile("profile_id_${i}", "name:${i}");
-            ProfilesInsertJob::dispatch($profile);
-        }
-
-        return response('created');
-    }
-
-    private function dummyContacts(int $count)
-    {
-        $channel_id = config('trengo.channels_id.email');
-        for ($i = 0; $i < $count; $i++) {
-            $contact = new Contact(
-                'id:'.$i,
-                "contact_id:{$i}",
-                "random_email{$i}@email.com",
-                $channel_id,
-                'name:'.$i
-            );
-            $profile = new Profile("profile_id_${i}", "name:${i}");
-            $profile->id($profile->idHashMap());
-
-            ContactsInsertJob::dispatch($contact, $profile);
-        }
-
-        return response('contacts created');
-    }
-
-    private function dummy()
-    {
-        $profilesResponse = $this->dummyProfiles(13);
-        $contactsResponse = $this->dummyContacts(13);
-
-        return $profilesResponse;
-        return $contactsResponse;
-    }
-
     public function batchStore(ProfilesBatchStoreRequest $request): Response
     {
-//        return $this->dummy();
         $trengoRateLimit = config('trengo.rateLimitPerMinute');
 
-        $profiles = Excel::toCollection(new ProfilesImport, $request->file('companies'))
-            ->first();
-        $contacts = Excel::toCollection(new ContactsImport, $request->file('contacts'))
-            ->first();
+        $profiles = Excel::toCollection(new ProfilesImport, $request->file('companies'))->first();
+        $contacts = Excel::toCollection(new ContactsImport, $request->file('contacts'))->first();
 
         Bus::chain([
             new ProfilesBatchInsertJob($profiles),
