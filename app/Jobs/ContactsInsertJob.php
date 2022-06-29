@@ -10,15 +10,14 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Http\Client\Response;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 
 class ContactsInsertJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 5;
     public int $maxExceptions = 5;
 
     /**
@@ -32,16 +31,15 @@ class ContactsInsertJob implements ShouldQueue
 
     public function handle()
     {
-        if ($timestamp = Cache::get('api-limit')) {
-            return $this->release($timestamp - time());
-        }
-
         $trengo = new Trengo(Http::trengo());
         $response = $trengo->createContact($this->contact)->sendRequest();
 
         $this->attachToProfile($response);
+    }
 
-        $this->releaseDueToRateLimit($response);
+    public function middleware()
+    {
+        return [new RateLimitedWithRedis('trengo')];
     }
 
     /**
@@ -64,25 +62,6 @@ class ContactsInsertJob implements ShouldQueue
             $this->contact->id($response->json('id'));
 
             ContactProfileAttachJob::dispatch($this->contact, $this->profile);
-        }
-    }
-
-    /**
-     * @param  Response  $response
-     * @return void
-     */
-    private function releaseDueToRateLimit(Response $response): void
-    {
-        if ($response->failed() && $response->status() == 429) {
-            $secondsRemaining = $response->header('Retry-After');
-
-            Cache::put(
-                'api-limit',
-                now()->addSeconds($secondsRemaining)->timestamp,
-                $secondsRemaining
-            );
-
-            $this->release($secondsRemaining);
         }
     }
 }

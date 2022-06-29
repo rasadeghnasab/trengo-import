@@ -7,6 +7,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 
@@ -28,15 +29,15 @@ class ProfilesBatchInsertJob implements ShouldQueue
 
     public function handle()
     {
-        $trengoRateLimit = config('trengo.rateLimitPerMinute');
-
-        foreach ($this->profiles->chunk($trengoRateLimit) as $index => $profiles) {
-            foreach ($profiles as $profile) {
-                $profileObject = new Profile($profile->get('id'), $profile->get('name'));
-//                $this->dispatch((new ProfilesInsertJob($profileObject))->delay(now()->addMinutes($index)));
-                ProfilesInsertJob::dispatch($profileObject);
-            }
+        foreach ($this->profiles as $profile) {
+            $profileObject = new Profile($profile->get('id'), $profile->get('name'));
+            ProfilesInsertJob::dispatch($profileObject);
         }
+    }
+
+    public function middleware()
+    {
+        return [new RateLimitedWithRedis('trengo')];
     }
 
     /**

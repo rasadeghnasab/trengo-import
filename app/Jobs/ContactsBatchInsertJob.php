@@ -8,6 +8,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Redis;
@@ -24,36 +25,38 @@ class ContactsBatchInsertJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private Collection $contacts, private ?int $startFromIndex = 0)
+    public function __construct(private Collection $contacts)
     {
     }
 
     public function handle()
     {
-        $trengoRateLimit = config('trengo.rateLimitPerMinute');
         $channelId = config('trengo.channels_id.email');
 
-        foreach ($this->contacts->chunk($trengoRateLimit) as $index => $contacts) {
-            foreach ($contacts as $contact) {
-                $contactObject = new Contact(
-                    $contact->get('company_id'),
-                    $contact->get('id'),
-                    $contact->get('email'),
-                    $channelId,
-                    $contact->get('name'),
-                );
+        foreach ($this->contacts as $contact) {
+            $contactObject = new Contact(
+                $contact->get('company_id'),
+                $contact->get('id'),
+                $contact->get('email'),
+                $channelId,
+                $contact->get('name'),
+            );
 
-                $profileId = $contactObject->profileId();
-                if (is_null($profileId)) {
-                    Redis::set(sprintf('NOT_EXISTS:%s', $contact->get('company_id')), 'error');
-                    continue;
-                }
-
-                $profileObject = new Profile($profileId, '');
-
-                ContactsInsertJob::dispatch($contactObject, $profileObject);
+            $profileId = $contactObject->profileId();
+            if (is_null($profileId)) {
+                Redis::set(sprintf('NOT_EXISTS:%s', $contact->get('company_id')), 'error');
+                continue;
             }
+
+            $profileObject = new Profile($profileId, '');
+
+            ContactsInsertJob::dispatch($contactObject, $profileObject);
         }
+    }
+
+    public function middleware()
+    {
+        return [new RateLimitedWithRedis('trengo')];
     }
 
     /**

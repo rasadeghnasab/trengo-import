@@ -10,6 +10,7 @@ use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -19,7 +20,6 @@ class ContactProfileAttachJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 5;
     public int $maxExceptions = 5;
 
     /**
@@ -33,24 +33,13 @@ class ContactProfileAttachJob implements ShouldQueue
 
     public function handle()
     {
-        if ($timestamp = Cache::get('api-limit')) {
-            return $this->release($timestamp - time());
-        }
-
         $trengo = new Trengo(Http::trengo());
-        $response = $trengo->attachContactToProfile($this->contact, $this->profile, 'EMAIL')->sendRequest();
+        $trengo->attachContactToProfile($this->contact, $this->profile, 'EMAIL')->sendRequest();
+    }
 
-        if ($response->failed() && $response->status() == 429) {
-            $secondsRemaining = $response->header('Retry-After');
-
-            Cache::put(
-                'api-limit',
-                now()->addSeconds($secondsRemaining)->timestamp,
-                $secondsRemaining
-            );
-
-            return $this->release($secondsRemaining);
-        }
+    public function middleware()
+    {
+        return [new RateLimitedWithRedis('trengo')];
     }
 
     /**
