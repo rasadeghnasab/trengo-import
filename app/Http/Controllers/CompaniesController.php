@@ -11,7 +11,6 @@ use App\Jobs\ProfilesBatchInsertJob;
 use App\Services\Trengo\Trengo;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Bus;
-use Illuminate\Support\Facades\Http;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Jobs\ProfilesDeleteJob;
 
@@ -22,7 +21,7 @@ class CompaniesController extends Controller
         $profiles = Excel::toCollection(new ProfilesImport, $request->file('companies'))->first();
         $contacts = Excel::toCollection(new ContactsImport, $request->file('contacts'))->first();
 
-        $trengo = new Trengo(Http::trengo());
+        $trengo = new Trengo();
 
         Bus::chain([
             new ProfilesBatchInsertJob($trengo, $profiles),
@@ -36,7 +35,7 @@ class CompaniesController extends Controller
 
     public function purgeProfiles(): Response
     {
-        $trengo = new Trengo(Http::trengo());
+        $trengo = new Trengo();
 
         $response = $trengo->sendRequest('profiles', [1]);
         while (!empty($response->json('data'))) {
@@ -54,7 +53,7 @@ class CompaniesController extends Controller
 
     public function purgeContacts(): Response
     {
-        $trengo = new Trengo(Http::trengo());
+        $trengo = new Trengo();
 
         $response = $trengo->sendRequest('contacts', [1]);
         while (!empty($response->json('data'))) {

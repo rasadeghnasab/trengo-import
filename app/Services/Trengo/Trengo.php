@@ -5,10 +5,9 @@ namespace App\Services\Trengo;
 use App\Services\Trengo\Routes\ContactsRoutesTrait;
 use App\Services\Trengo\Routes\ProfilesRoutesTrait;
 use App\Services\Interfaces\HttpCallable;
-use App\Services\Trengo\Models\Contact;
-use App\Services\Trengo\Models\Profile;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Http;
 
 class Trengo implements HttpCallable
 {
@@ -19,37 +18,34 @@ class Trengo implements HttpCallable
     private string $path;
     private array $data = [];
 
-    public function __construct(PendingRequest $http)
+    public function __construct()
     {
-        $this->http = $http;
     }
 
     public function sendRequest(string $endpoint, ?array $data = []): Response
     {
         $this->validate($endpoint);
 
-        $this->$endpoint(...$data);
+        $http = $this->$endpoint(...$data);
 
         $method = $this->method;
         $path = $this->path;
 
-        return $this->http->$method($path, $this->data);
+        return $http->$method($path, $this->data);
     }
 
     private function validate(string $endpoint)
     {
         if (!method_exists($this, $endpoint)) {
             // it can be a custom exception
-            throw new \Exception(sprintf('%s endpoint is not defined. Please check the name and try again'));
+            throw new \Exception(sprintf('%s endpoint is not defined. Please check the name and try again', $endpoint));
         }
     }
 
-    private function authenticate(): self
+    private function authenticate()
     {
-        $this->http
+        return Http::trengo()
             ->acceptJson()
             ->withToken(config('trengo.token'));
-
-        return $this;
     }
 }

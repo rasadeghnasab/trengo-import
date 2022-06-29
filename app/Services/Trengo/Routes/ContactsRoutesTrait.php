@@ -3,10 +3,11 @@
 namespace App\Services\Trengo\Routes;
 
 use App\Services\Trengo\Models\Contact;
+use Illuminate\Http\Client\PendingRequest;
 
 trait ContactsRoutesTrait
 {
-    private function contacts(int $page = 1, ?string $term = null): self
+    private function contacts(int $page = 1, ?string $term = null): PendingRequest
     {
         $this->method = 'get';
         $this->path = '/contacts';
@@ -21,7 +22,7 @@ trait ContactsRoutesTrait
         return $this->authenticate();
     }
 
-    private function createContact(Contact $contact): self
+    private function createContact(Contact $contact): PendingRequest
     {
         $this->method = 'post';
         $this->path = sprintf('/channels/%s/contacts', config('trengo.channels_id.email'));
@@ -30,7 +31,7 @@ trait ContactsRoutesTrait
         return $this->authenticate();
     }
 
-    private function deleteContact(int $contactId): self
+    private function deleteContact(int $contactId): PendingRequest
     {
         $this->method = 'delete';
         $this->path = "/contacts/{$contactId}";

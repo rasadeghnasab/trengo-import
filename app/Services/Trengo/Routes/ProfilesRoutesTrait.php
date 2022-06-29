@@ -4,10 +4,11 @@ namespace App\Services\Trengo\Routes;
 
 use App\Services\Trengo\Models\Contact;
 use App\Services\Trengo\Models\Profile;
+use Illuminate\Http\Client\PendingRequest;
 
 trait ProfilesRoutesTrait
 {
-    private function profiles(int $page = 1, string $term = null): self
+    private function profiles(int $page = 1, string $term = null): PendingRequest
     {
         $this->method = 'get';
         $this->path = '/profiles';
@@ -22,7 +23,7 @@ trait ProfilesRoutesTrait
         return $this->authenticate();
     }
 
-    private function createProfile(Profile $profile): self
+    private function createProfile(Profile $profile): PendingRequest
     {
         $this->method = 'post';
         $this->path = '/profiles';
@@ -31,7 +32,7 @@ trait ProfilesRoutesTrait
         return $this->authenticate();
     }
 
-    private function deleteProfile(int $profileId): self
+    private function deleteProfile(int $profileId): PendingRequest
     {
         $this->method = 'delete';
         $this->path = "/profiles/{$profileId}";
@@ -39,7 +40,7 @@ trait ProfilesRoutesTrait
         return $this->authenticate();
     }
 
-    private function attachContactToProfile(Contact $contact, Profile $profile, string $type): self
+    private function attachContactToProfile(Contact $contact, Profile $profile, string $type): PendingRequest
     {
         $this->method = 'post';
         $this->path = sprintf('/profiles/%s/contacts', $profile->id());
