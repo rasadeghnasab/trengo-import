@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 
@@ -27,6 +28,10 @@ class TrengoServiceProvider extends ServiceProvider
     {
         RateLimiter::for('trengo', function () {
             return Limit::perMinute(config('trengo.rateLimitPerMinute'));
+        });
+
+        Http::macro('trengo', function () {
+            return Http::baseUrl(config('trengo.baseURL'));
         });
     }
 }
