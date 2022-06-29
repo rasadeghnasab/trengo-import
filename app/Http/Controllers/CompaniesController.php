@@ -41,7 +41,7 @@ class CompaniesController extends Controller
         $response = $trengo->sendRequest('profiles', [1]);
         while (!empty($response->json('data'))) {
             foreach ($response->json('data') as $profile) {
-                ProfilesDeleteJob::dispatchSync($profile['id']);
+                ProfilesDeleteJob::dispatchSync($trengo, $profile['id']);
             }
             $response = $trengo->sendRequest('profiles', [1]);
         }
@@ -59,7 +59,7 @@ class CompaniesController extends Controller
         $response = $trengo->sendRequest('contacts', [1]);
         while (!empty($response->json('data'))) {
             foreach ($response->json('data') as $contacts) {
-                ContactsDeleteJob::dispatchSync($contacts['id']);
+                ContactsDeleteJob::dispatchSync($trengo, $contacts['id']);
             }
             $response = $trengo->sendRequest('contacts', [1]);
         }
