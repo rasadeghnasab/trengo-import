@@ -6,7 +6,7 @@ use App\Services\Trengo\Models\Contact;
 
 trait ContactsRoutesTrait
 {
-    public function contacts(int $page = 1, ?string $term = null): self
+    private function contacts(int $page = 1, ?string $term = null): self
     {
         $this->method = 'get';
         $this->path = '/contacts';
@@ -21,7 +21,7 @@ trait ContactsRoutesTrait
         return $this->authenticate();
     }
 
-    public function createContact(Contact $contact): self
+    private function createContact(Contact $contact): self
     {
         $this->method = 'post';
         $this->path = sprintf('/channels/%s/contacts', config('trengo.channels_id.email'));
@@ -30,7 +30,7 @@ trait ContactsRoutesTrait
         return $this->authenticate();
     }
 
-    public function deleteContact(int $contactId): self
+    private function deleteContact(int $contactId): self
     {
         $this->method = 'delete';
         $this->path = "/contacts/{$contactId}";

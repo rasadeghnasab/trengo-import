@@ -2,9 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Services\Interfaces\HttpCallable;
 use App\Services\Trengo\Models\Contact;
 use App\Services\Trengo\Models\Profile;
-use App\Services\Trengo\Trengo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -12,7 +12,6 @@ use Illuminate\Http\Client\Response;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Http;
 
 class ContactsInsertJob implements ShouldQueue
 {
@@ -25,14 +24,13 @@ class ContactsInsertJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private Contact $contact, private ?Profile $profile = null)
+    public function __construct(private HttpCallable $http, private Contact $contact, private ?Profile $profile = null)
     {
     }
 
     public function handle()
     {
-        $trengo = new Trengo(Http::trengo());
-        $response = $trengo->createContact($this->contact)->sendRequest();
+        $response = $this->http->sendRequest('createContact', [$this->contact]);
 
         $this->attachToProfile($response);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Services\Interfaces\HttpCallable;
 use App\Services\Trengo\Models\Profile;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -15,7 +16,6 @@ class ProfilesBatchInsertJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 5;
     public int $maxExceptions = 5;
 
     /**
@@ -23,7 +23,7 @@ class ProfilesBatchInsertJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private Collection $profiles)
+    public function __construct(private HttpCallable $http, private Collection $profiles)
     {
     }
 
@@ -31,7 +31,7 @@ class ProfilesBatchInsertJob implements ShouldQueue
     {
         foreach ($this->profiles as $profile) {
             $profileObject = new Profile($profile->get('id'), $profile->get('name'));
-            ProfilesInsertJob::dispatch($profileObject);
+            ProfilesInsertJob::dispatch($this->http, $profileObject);
         }
     }
 

@@ -2,15 +2,13 @@
 
 namespace App\Jobs;
 
-use App\Services\Trengo\Trengo;
+use App\Services\Interfaces\HttpCallable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 
 class ProfilesDeleteJob implements ShouldQueue
 {
@@ -23,14 +21,13 @@ class ProfilesDeleteJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private int $profileId)
+    public function __construct(private HttpCallable $http, private int $profileId)
     {
     }
 
     public function handle()
     {
-        $trengo = new Trengo(Http::trengo());
-        $trengo->deleteProfile($this->profileId)->sendRequest();
+        $this->http->sendRequest('deleteProfile', [$this->profileId]);
     }
 
     public function middleware()

@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Services\Interfaces\HttpCallable;
 use App\Services\Trengo\Models\Contact;
 use App\Services\Trengo\Models\Profile;
 use Illuminate\Bus\Queueable;
@@ -17,7 +18,6 @@ class ContactsBatchInsertJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 5;
     public int $maxExceptions = 5;
 
     /**
@@ -25,7 +25,7 @@ class ContactsBatchInsertJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private Collection $contacts)
+    public function __construct(private HttpCallable $http, private Collection $contacts)
     {
     }
 
@@ -50,7 +50,7 @@ class ContactsBatchInsertJob implements ShouldQueue
 
             $profileObject = new Profile($profileId, '');
 
-            ContactsInsertJob::dispatch($contactObject, $profileObject);
+            ContactsInsertJob::dispatch($this->http, $contactObject, $profileObject);
         }
     }
 

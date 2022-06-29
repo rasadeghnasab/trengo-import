@@ -2,14 +2,13 @@
 
 namespace App\Jobs;
 
-use App\Services\Trengo\Trengo;
+use App\Services\Interfaces\HttpCallable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Http;
 
 class ContactsDeleteJob implements ShouldQueue
 {
@@ -22,14 +21,13 @@ class ContactsDeleteJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private int $contactId)
+    public function __construct(private HttpCallable $http, private int $contactId)
     {
     }
 
     public function handle()
     {
-        $trengo = new Trengo(Http::trengo());
-        $trengo->deleteContact($this->contactId)->sendRequest();
+        $this->http->sendRequest('deleteContact', [$this->contactId]);
     }
 
     public function middleware()

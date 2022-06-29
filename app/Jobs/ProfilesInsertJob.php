@@ -4,19 +4,12 @@ namespace App\Jobs;
 
 use App\Services\Interfaces\HttpCallable;
 use App\Services\Trengo\Models\Profile;
-use App\Services\Trengo\Trengo;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\Middleware\RateLimitedWithRedis;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Http;
-
-use Illuminate\Support\Str;
 
 class ProfilesInsertJob implements ShouldQueue
 {
@@ -29,16 +22,15 @@ class ProfilesInsertJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct(private Profile $profile)
+    public function __construct(private HttpCallable $http, private Profile $profile)
     {
     }
 
     public function handle()
     {
-        $trengo = new Trengo(Http::trengo());
-        $response = $trengo->createProfile($this->profile)->sendRequest();
+        $response = $this->http->sendRequest('createProfile', [$this->profile]);
 
-        if($response->successful() && $response->status() === 201) {
+        if ($response->successful() && $response->status() === 201) {
             $this->profile->idHashMap($response->json('id'));
         }
     }

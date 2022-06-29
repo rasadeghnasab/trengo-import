@@ -7,7 +7,7 @@ use App\Services\Trengo\Models\Profile;
 
 trait ProfilesRoutesTrait
 {
-    public function profiles(int $page = 1, string $term = null): self
+    private function profiles(int $page = 1, string $term = null): self
     {
         $this->method = 'get';
         $this->path = '/profiles';
@@ -22,7 +22,7 @@ trait ProfilesRoutesTrait
         return $this->authenticate();
     }
 
-    public function createProfile(Profile $profile): self
+    private function createProfile(Profile $profile): self
     {
         $this->method = 'post';
         $this->path = '/profiles';
@@ -31,7 +31,7 @@ trait ProfilesRoutesTrait
         return $this->authenticate();
     }
 
-    public function deleteProfile(int $profileId): self
+    private function deleteProfile(int $profileId): self
     {
         $this->method = 'delete';
         $this->path = "/profiles/{$profileId}";
@@ -39,7 +39,7 @@ trait ProfilesRoutesTrait
         return $this->authenticate();
     }
 
-    public function attachContactToProfile(Contact $contact, Profile $profile, string $type): self
+    private function attachContactToProfile(Contact $contact, Profile $profile, string $type): self
     {
         $this->method = 'post';
         $this->path = sprintf('/profiles/%s/contacts', $profile->id());

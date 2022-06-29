@@ -6,5 +6,5 @@ use Illuminate\Http\Client\Response;
 
 interface HttpCallable
 {
-    public function sendRequest(): Response;
+    public function sendRequest(string $endpoint, ?array $data = []): Response;
 }

@@ -24,15 +24,24 @@ class Trengo implements HttpCallable
         $this->http = $http;
     }
 
-    public function sendRequest(): Response
+    public function sendRequest(string $endpoint, ?array $data = []): Response
     {
+        $this->validate($endpoint);
+
+        $this->$endpoint(...$data);
+
         $method = $this->method;
         $path = $this->path;
-        $data = $this->data;
 
-        $this->http->acceptJson();
+        return $this->http->$method($path, $this->data);
+    }
 
-        return $this->http->$method($path, $data);
+    private function validate(string $endpoint)
+    {
+        if (!method_exists($this, $endpoint)) {
+            // it can be a custom exception
+            throw new \Exception(sprintf('%s endpoint is not defined. Please check the name and try again'));
+        }
     }
 
     private function authenticate(): self

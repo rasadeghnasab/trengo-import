@@ -22,9 +22,11 @@ class CompaniesController extends Controller
         $profiles = Excel::toCollection(new ProfilesImport, $request->file('companies'))->first();
         $contacts = Excel::toCollection(new ContactsImport, $request->file('contacts'))->first();
 
+        $trengo = new Trengo(Http::trengo());
+
         Bus::chain([
-            new ProfilesBatchInsertJob($profiles),
-            new ContactsBatchInsertJob($contacts),
+            new ProfilesBatchInsertJob($trengo, $profiles),
+            new ContactsBatchInsertJob($trengo, $contacts),
         ])->dispatch();
 
         return response([
@@ -36,12 +38,12 @@ class CompaniesController extends Controller
     {
         $trengo = new Trengo(Http::trengo());
 
-        $response = $trengo->profiles(1)->sendRequest();
+        $response = $trengo->sendRequest('profiles', [1]);
         while (!empty($response->json('data'))) {
             foreach ($response->json('data') as $profile) {
                 ProfilesDeleteJob::dispatchSync($profile['id']);
             }
-            $response = $trengo->profiles(1)->sendRequest();
+            $response = $trengo->sendRequest('profiles', [1]);
         }
 
         return response([
@@ -54,12 +56,12 @@ class CompaniesController extends Controller
     {
         $trengo = new Trengo(Http::trengo());
 
-        $response = $trengo->contacts(1)->sendRequest();
+        $response = $trengo->sendRequest('contacts', [1]);
         while (!empty($response->json('data'))) {
             foreach ($response->json('data') as $contacts) {
                 ContactsDeleteJob::dispatchSync($contacts['id']);
             }
-            $response = $trengo->contacts(1)->sendRequest();
+            $response = $trengo->sendRequest('contacts', [1]);
         }
 
         return response([
